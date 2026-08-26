@@ -1,0 +1,27 @@
+# секреты
+.env
+*.env
+!.env.example
+
+# выгрузки переписок
+/export/
+*.jsonl
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# редакторы и ОС
+.idea/
+.vscode/
+.DS_Store

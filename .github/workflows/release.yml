@@ -1,0 +1,76 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    name: Проверка перед выпуском
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Установка
+        run: pip install -e ".[dev]"
+
+      - name: Тесты и линтер
+        run: |
+          pytest -q
+          ruff check .
+
+      - name: Версия пакета совпадает с тегом
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg="$(python -c 'import retailcrm_mg; print(retailcrm_mg.__version__)')"
+          echo "тег: $tag, пакет: $pkg"
+          test "$tag" = "$pkg" || {
+            echo "::error::тег $GITHUB_REF_NAME не совпадает с retailcrm_mg.__version__ ($pkg)"
+            exit 1
+          }
+
+  publish:
+    name: Сборка и GitHub Release
+    needs: verify
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Сборка дистрибутивов
+        run: |
+          pip install build
+          python -m build
+
+      - name: Раздел CHANGELOG для этой версии
+        id: notes
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          awk -v v="$version" '
+            $0 ~ "^## \\[" v "\\]" { found = 1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "Изменения: см. CHANGELOG.md" > release-notes.md
+          fi
+
+      - name: Публикация релиза
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: release-notes.md
+          files: dist/*
+          fail_on_unmatched_files: true

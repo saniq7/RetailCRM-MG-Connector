@@ -1,0 +1,23 @@
+[Unit]
+Description=Выгрузка переписок RetailCRM MessageGateway
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=mg
+Environment=RETAILCRM_MG_ENV_FILE=/etc/retailcrm-mg/.env
+ExecStart=/opt/retailcrm-mg/.venv/bin/retailcrm-mg export \
+    --out /var/lib/retailcrm-mg/export \
+    --format jsonl \
+    --limit 500
+
+# Изоляция: коннектору нужен только свой каталог и сеть.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/retailcrm-mg
+
+[Install]
+WantedBy=multi-user.target

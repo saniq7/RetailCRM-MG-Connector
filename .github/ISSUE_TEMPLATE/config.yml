@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Документация коннектора
+    url: https://github.com/saniq7/RetailCRM-MG-Connector/tree/main/docs
+    about: Быстрый старт, справочник CLI и разбор типовых ошибок
+  - name: Документация RetailCRM API
+    url: https://docs.retailcrm.ru/Developers/API
+    about: Вопросы по самому API RetailCRM
